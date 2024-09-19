@@ -499,7 +499,13 @@ function authenticatedAjax(settings) {
             Authorization: token
         };
     }
-    return $.ajax(settings);
+    let ajax = $.ajax(settings);
+    ajax.fail((jqxhr) => {
+        if (jqxhr.status == 401) {
+            requireLogin()
+        }
+    })
+    return ajax
 }
 
 
@@ -508,7 +514,7 @@ function authenticatedAjax(settings) {
 $(document).ready(function() {
     updateLoginStatus();
 
-    $('#loginForm').submit(function(e) {
+    $('#loginForm').submit(function(e) {    
         e.preventDefault();
         $.ajax({
             type: 'POST',
@@ -535,9 +541,11 @@ $(document).ready(function() {
                 sessionStorage.setItem("username", data.username);
 
                 $('#loginErrorField').text("")
-                $('#modalLoginForm').modal('hide');
                 updateLoginStatus();
-                window.location.reload();
+
+                let url = new URL(window.location.href)
+                let redirect = new URLSearchParams(url.search).get('r')
+                window.location.replace(redirect || "/index.html");
             } else if (typeof data.error !== 'undefined') {
                 // If authentication failed, the returned error message is displayed.
                 $('#loginErrorField').text(data.error);
@@ -562,7 +570,20 @@ $(document).ready(function() {
     });
 
     $('#logOut').click(logout);
+    $('#signUp').click(()=>{
+        requireLogin()
+    });
 });
+
+function requireLogin(destinationUrl){
+    let currentPath = window.location.pathname.substring(1)
+    let loginUrl = "/login.html"
+
+    if ( ! ["login.html", "index.html"].includes(currentPath)){
+        loginUrl += "?r=" + encodeURIComponent(destinationUrl || currentPath)
+    }
+    window.location.href = loginUrl
+}
 
 function logout() {
     sessionStorage.removeItem("login_token");
