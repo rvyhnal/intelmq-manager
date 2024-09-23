@@ -233,6 +233,7 @@ function load_bot_log() {
 
     let bot_id = getUrlParameter('bot_id') || ALL_BOTS;
     let level = document.getElementById('log-level-indicator').value;
+    level = (level === 'ALL') ? 'CRITICAL' : level
     if(bot_id === ALL_BOTS) {
          return;
     }
